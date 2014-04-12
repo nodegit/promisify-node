@@ -1,7 +1,7 @@
 Promisify Node
 --------------
 
-**Stable: 0.1.0** 
+**Stable: 0.1.1** 
 
 [![Build
 Status](https://travis-ci.org/tbranyen/promisify-node.png?branch=master)](https://travis-ci.org/tbranyen/promisify-node)
