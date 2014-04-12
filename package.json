@@ -1,0 +1,17 @@
+{
+  "name": "promisify-node",
+  "version": "0.1.0",
+  "description": "Wrap Node-callback functions to return Promises.",
+  "main": "index.js",
+  "dependencies": {
+    "promise": "~4.0.0"
+  },
+  "devDependencies": {
+    "mocha": "~1.18.2"
+  },
+  "scripts": {
+    "test": "mocha test"
+  },
+  "author": "Tim Branyen (@tbranyen)",
+  "license": "MIT"
+}
