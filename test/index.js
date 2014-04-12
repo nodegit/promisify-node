@@ -14,4 +14,8 @@ describe("Promisify", function() {
       done();
     });
   });
+
+  it("exports a callbacks array", function() {
+    assert(Array.isArray(promisify.callbacks));
+  });
 });
