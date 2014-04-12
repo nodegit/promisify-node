@@ -3,7 +3,7 @@ const args = require("./utils/args");
 
 // Unfortunately this list is not exhaustive, so if you find that a method does
 // not use a "standard"-ish name, you'll have to extend this list.
-var callbacks = exports.callbacks = ["cb", "callback", "callback_", "done"];
+var callbacks = ["cb", "callback", "callback_", "done"];
 
 /**
  * Recursively operate over an object locating "asynchronous" functions by
@@ -71,3 +71,6 @@ module.exports = function(name) {
   // promises.
   return processExports(exports);
 };
+
+// Export callbacks to the module.
+module.exports.callbacks = callbacks;
