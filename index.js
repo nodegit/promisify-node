@@ -3,7 +3,7 @@ const args = require("./utils/args");
 
 // Unfortunately this list is not exhaustive, so if you find that a method does
 // not use a "standard"-ish name, you'll have to extend this list.
-var callbacks = exports.callbacks = ["cb", "callback", "callback_", "done"];
+var callbacks = exports.callbacks = /^(cb|callback_?|done)$/i;
 
 /**
  * Recursively operate over an object locating "asynchronous" functions by
@@ -37,7 +37,7 @@ function processExports(exports) {
     else if (typeof value === "function") {
       // If the callback name exists as the last argument, consider it an
       // asynchronous function.  Brittle? Fragile? Effective.
-      if (callbacks.indexOf(args(value).slice(-1)[0]) > -1) {
+      if (callbacks.test(args(value).slice(-1)[0])) {
         return true;
       }
     }

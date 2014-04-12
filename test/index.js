@@ -41,6 +41,14 @@ describe("Promisify", function() {
 
     it("can infer callback-accepting functions by argument list", function() {
       var obj = promisify({
+        a: function(CB) { later(CB); }
+      });
+
+      return obj.a();
+    });
+
+    it("can infer callback-accepting functions by argument list", function() {
+      var obj = promisify({
         a: function(callback) { later(callback); }
       });
 
