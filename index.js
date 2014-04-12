@@ -36,7 +36,7 @@ function processExports(exports) {
     // Filter to functions with callbacks only.
     else if (typeof value === "function") {
       // If the callback name exists as the last argument, consider it an
-      // asynchronous function.  Brittle? Fragile? Effective.
+      // asynchronous function.  Brittle? Fragile? Yes.
       if (callbacks.test(args(value).slice(-1)[0])) {
         return true;
       }
