@@ -18,6 +18,13 @@ describe("Promisify", function() {
     assert(Array.isArray(promisify.callbacks));
   });
 
+  describe("node modules", function() {
+    it("can be consumed", function() {
+      var fs = promisify("fs");
+      return fs.readFile(__dirname + "/../LICENSE");
+    });
+  });
+
   describe("asynchronous method inference", function() {
     var later = function(cb) {
       setTimeout(cb(null), 0);
@@ -65,6 +72,30 @@ describe("Promisify", function() {
       });
 
       return obj.a();
+    });
+
+    it("can identify an asynchronous function by filter function", function() {
+      var obj = promisify({
+        a: function a() { arguments[0](); }
+      }, function(func) {
+        return func.name === "a";
+      });
+
+      return obj.a();
+    });
+
+    it("can iterate over prototypes", function() {
+      function Test() {}
+
+      Test.prototype = {
+        a: function a() { arguments[0](); }
+      };
+
+      promisify(Test, function(func, keyName, parentKeyName) {
+        return func.name === "a";
+      });
+
+      return new Test().a();
     });
   });
 });
