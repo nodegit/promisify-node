@@ -7,10 +7,11 @@
     "promise": "~4.0.0"
   },
   "devDependencies": {
-    "mocha": "~1.18.2"
+    "mocha": "~1.18.2",
+    "istanbul": "~0.2.7"
   },
   "scripts": {
-    "test": "mocha test"
+    "test": "istanbul cover _mocha -- test"
   },
   "author": "Tim Branyen (@tbranyen)",
   "license": "MIT"
