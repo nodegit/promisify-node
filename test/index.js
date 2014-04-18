@@ -23,6 +23,13 @@ describe("Promisify", function() {
       var fs = promisify("fs");
       return fs.readFile(__dirname + "/../LICENSE");
     });
+
+    it("can promisify the same object twice without breaking", function() {
+      var fs = promisify("fs");
+      fs = promisify("fs");
+
+      return fs.readFile(__dirname + "/../LICENSE");
+    });
   });
 
   describe("asynchronous method inference", function() {
