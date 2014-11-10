@@ -1,4 +1,4 @@
-const Promise = require("promise");
+const q = require("q");
 const args = require("./utils/args");
 
 // Unfortunately this list is not exhaustive, so if you find that a method does
@@ -16,7 +16,8 @@ var callbacks = ["cb", "callback", "callback_", "done"];
  */
 function processExports(exports, test, cached, parentKeyName) {
   // Return early if this object has already been processed.
-  if (cached.indexOf(exports) > -1) {
+  if (cached.indexOf(exports) > -1 ||
+    (exports && exports.prototype && exports.prototype._hasBeenPromisified)) {
     return exports;
   }
 
@@ -58,10 +59,11 @@ function processExports(exports, test, cached, parentKeyName) {
     }
 
     // Assign the new function in place.
-    var wrapped = Promise.denodeify(exports);
+    var wrapped = q.nfbind(exports);
 
     // Attach the augmented prototype.
     wrapped.prototype = exports.prototype;
+    wrapped.prototype._hasBeenPromisified = true;
 
     // Ensure attached properties to the previous function are accessible.
     wrapped.__proto__ = exports;
@@ -81,8 +83,10 @@ function processExports(exports, test, cached, parentKeyName) {
       processExports(exports, test, cached, keyName + ".");
     }
 
-    // Wrap this function and reassign.
-    exports[keyName] = processExports(value, test, cached, parentKeyName);
+    if (value) {
+      // Wrap this function and reassign.
+      exports[keyName] = processExports(value, test, cached, parentKeyName);
+    }
   });
 
   return exports;

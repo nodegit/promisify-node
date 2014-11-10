@@ -4,7 +4,7 @@
   "description": "Wrap Node-callback functions to return Promises.",
   "main": "index.js",
   "dependencies": {
-    "promise": "~4.0.0"
+    "q": "~1.1.1"
   },
   "devDependencies": {
     "mocha": "~1.18.2",
