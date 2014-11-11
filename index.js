@@ -1,4 +1,4 @@
-const Promise = require("promise");
+const Promise = require("nodegit-promise");
 const args = require("./utils/args");
 
 // Unfortunately this list is not exhaustive, so if you find that a method does
