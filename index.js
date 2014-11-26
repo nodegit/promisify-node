@@ -37,28 +37,13 @@ function processExports(exports, test, cached, parentKeyName) {
       exports[keyName] = processExports(exports[keyName], test, cached, name);
     }
 
+    // Assign the new function in place.
+    var wrapped = Promise.denodeify(exports);
+
     // Find methods on the prototype, if there are any.
     if (Object.keys(exports.prototype).length) {
       processExports(exports.prototype, test, cached, name);
     }
-
-    // If a filter function exists, use this to determine if the function
-    // is asynchronous.
-    if (test) {
-      // Pass the function itself, its keyName, and the parent keyName.
-      if (!test(exports, exports.name || parentKeyName, parentKeyName)) {
-        return exports;
-      }
-    }
-
-    // If the callback name exists as the last argument, consider it an
-    // asynchronous function.  Brittle? Fragile? Effective.
-    else if (callbacks.indexOf(args(exports).slice(-1)[0]) === -1) {
-      return exports;
-    }
-
-    // Assign the new function in place.
-    var wrapped = Promise.denodeify(exports);
 
     // Attach the augmented prototype.
     wrapped.prototype = exports.prototype;
@@ -72,7 +57,7 @@ function processExports(exports, test, cached, parentKeyName) {
   Object.keys(exports).map(function(keyName) {
     // Convert to values.
     return [keyName, exports[keyName]];
-  }).forEach(function(keyVal) {
+  }).filter(function(keyVal) {
     var keyName = keyVal[0];
     var value = keyVal[1];
 
@@ -80,9 +65,27 @@ function processExports(exports, test, cached, parentKeyName) {
     if (typeof value === "object") {
       processExports(exports, test, cached, keyName + ".");
     }
+    // Filter to functions with callbacks only.
+    else if (typeof value === "function") {
+      // If a filter function exists, use this to determine if the function
+      // is asynchronous.
+      if (test) {
+        // Pass the function itself, its keyName, and the parent keyName.
+        return test(value, keyName, parentKeyName);
+      }
+
+      // If the callback name exists as the last argument, consider it an
+      // asynchronous function.  Brittle? Fragile? Effective.
+      if (callbacks.indexOf(args(value).slice(-1)[0]) > -1) {
+        return true;
+      }
+    }
+  }).forEach(function(keyVal) {
+    var keyName = keyVal[0];
+    var func = keyVal[1];
 
     // Wrap this function and reassign.
-    exports[keyName] = processExports(value, test, cached, parentKeyName);
+    exports[keyName] = processExports(func, test, cached, parentKeyName);
   });
 
   return exports;

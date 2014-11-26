@@ -98,8 +98,8 @@ describe("Promisify", function() {
         a: function a() { arguments[0](); }
       };
 
-      promisify(Test, function(func, keyName) {
-        return keyName === "a";
+      promisify(Test, function(func, keyName, parentKeyName) {
+        return func.name === "a";
       });
 
       return new Test().a();
