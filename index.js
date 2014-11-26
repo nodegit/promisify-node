@@ -46,7 +46,7 @@ function processExports(exports, test, cached, parentKeyName) {
     // is asynchronous.
     if (test) {
       // Pass the function itself, its keyName, and the parent keyName.
-      if (!test(exports, exports.name || parentKeyName, parentKeyName)) {
+      if (!test(exports, exports.name || parentKeyName)) {
         return exports;
       }
     }
