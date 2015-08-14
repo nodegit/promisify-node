@@ -1,6 +1,6 @@
 {
   "name": "promisify-node",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Wrap Node-callback functions to return Promises.",
   "main": "index.js",
   "dependencies": {
@@ -9,6 +9,10 @@
   "devDependencies": {
     "mocha": "~1.18.2",
     "istanbul": "~0.2.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nodegit/promisify-node.git"
   },
   "scripts": {
     "test": "istanbul cover _mocha -- test"
