@@ -1,10 +1,10 @@
 {
   "name": "promisify-node",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Wrap Node-callback functions to return Promises.",
   "main": "index.js",
   "dependencies": {
-    "nodegit-promise": "~3.0.2"
+    "nodegit-promise": "~4.0.0"
   },
   "devDependencies": {
     "mocha": "~1.18.2",
