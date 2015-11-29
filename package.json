@@ -4,7 +4,8 @@
   "description": "Wrap Node-callback functions to return Promises.",
   "main": "index.js",
   "dependencies": {
-    "nodegit-promise": "~4.0.0"
+    "nodegit-promise": "~4.0.0",
+    "object-assign": "^4.0.1"
   },
   "devDependencies": {
     "mocha": "~1.18.2",

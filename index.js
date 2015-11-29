@@ -1,5 +1,7 @@
 const Promise = require("nodegit-promise");
 const args = require("./utils/args");
+const cloneFunction = require("./utils/cloneFunction");
+const objectAssign = require("object-assign");
 
 // Unfortunately this list is not exhaustive, so if you find that a method does
 // not use a "standard"-ish name, you'll have to extend this list.
@@ -12,21 +14,25 @@ var callbacks = ["cb", "callback", "callback_", "done"];
  * @param {*} exports - Should be a function or an object, identity other.
  * @param {Function} test - Optional function to identify async methods.
  * @param {String} parentKeyName - Tracks the keyName in a digestable format.
+ * @param {Boolean} noMutate - if set to true then all reference properties are
+ * cloned to avoid mutating the original object.
  * @returns {*} exports - Identity.
  */
-function processExports(exports, test, cached, parentKeyName) {
-  // Return early if this object has already been processed.
-  if (cached.indexOf(exports) > -1) {
+function processExports(exports, test, cached, parentKeyName, noMutate) {
+  if(!exports) {
     return exports;
-  } else if(typeof exports === "function") {
-    // For functions, cache the original and wrapped version, else non-wrapped
-    // functions end up being given back when encountered multiple times.
-    var cacheResult = cached.filter(function(c) {
-      return c.original === exports;
-    });
+  }
 
+  if(noMutate || typeof exports === "function") {
+    // When not mutating we have to cache the original and the wrapped clone.
+    var cacheResult = cached.filter(function(c) { return c.original === exports; });
     if(cacheResult.length) {
       return cacheResult[0].wrapped;
+    }
+  } else {
+    // Return early if this object has already been processed.
+    if (cached.indexOf(exports) > -1) {
+      return exports;
     }
   }
 
@@ -41,14 +47,31 @@ function processExports(exports, test, cached, parentKeyName) {
   }
 
   var name = exports.name + "#";
+  var target;
 
   // If a function, simply return it wrapped.
   if (typeof exports === "function") {
-    // Assign the new function in place.
-    var wrapped = Promise.denodeify(exports);
+    var wrapped = exports;
+    var isAsyncFunction = false;
 
-    // Push the wrapped function onto the cache before processing properties,
-    // else a cyclical function property causes a stack overflow.
+    // Check the callback either passes the test function, or accepts a callback.
+    if ((test && test(exports, exports.name, parentKeyName))
+      // If the callback name exists as the last argument, consider it an
+      // asynchronous function.  Brittle? Fragile? Effective.
+      || (callbacks.indexOf(args(exports).slice(-1)[0]) > -1)) {
+      // Assign the new function in place.
+      wrapped = Promise.denodeify(exports);
+
+      isAsyncFunction = true;
+    } else if(noMutate) {
+      // If not mutating, then we need to clone the function, even though it isn't async.
+      wrapped = cloneFunction(exports);
+    }
+
+    // Set which object we'll mutate based upon the noMutate flag.
+    target = noMutate ? wrapped : exports;
+
+    // Here we can push our cloned/wrapped function and original onto cache.
     cached.push({
       original: exports,
       wrapped: wrapped
@@ -56,36 +79,47 @@ function processExports(exports, test, cached, parentKeyName) {
 
     // Find properties added to functions.
     for (var keyName in exports) {
-      exports[keyName] = processExports(exports[keyName], test, cached, name);
+      target[keyName] = processExports(exports[keyName], test, cached, name, noMutate);
     }
 
     // Find methods on the prototype, if there are any.
     if (Object.keys(exports.prototype).length) {
-      processExports(exports.prototype, test, cached, name);
+      // Attach the augmented prototype.
+      wrapped.prototype = processExports(exports.prototype, test, cached, name, noMutate);
     }
 
-    // Attach the augmented prototype.
-    wrapped.prototype = exports.prototype;
-
     // Ensure attached properties to the previous function are accessible.
-    wrapped.__proto__ = exports;
+    // Only do this if it's an async (wrapped) function, else we're setting
+    // __proto__ to itself, which isn't allowed.
+    if(isAsyncFunction) {
+      wrapped.__proto__ = exports;
+    }
 
     return wrapped;
   }
 
-  Object.keys(exports).map(function(keyName) {
+  // Make a shallow clone if we're not mutating and set it as the target, else just use exports
+  target = noMutate ? objectAssign({}, exports) : exports;
+
+  // We have our shallow cloned object, so put it (and the original) in the cache
+  if(noMutate) {
+    cached.push({
+      original: exports,
+      wrapped: target
+    });
+  }
+
+  Object.keys(target).map(function(keyName) {
     // Convert to values.
-    return [keyName, exports[keyName]];
+    return [keyName, target[keyName]];
   }).filter(function(keyVal) {
     var keyName = keyVal[0];
     var value = keyVal[1];
 
     // If an object is encountered, recursively traverse.
     if (typeof value === "object") {
-      processExports(exports, test, cached, keyName + ".");
-    }
-    // Filter to functions with callbacks only.
-    else if (typeof value === "function") {
+      processExports(value, test, cached, keyName + ".", noMutate);
+    } else if (typeof value === "function") {
       // If a filter function exists, use this to determine if the function
       // is asynchronous.
       if (test) {
@@ -93,21 +127,17 @@ function processExports(exports, test, cached, parentKeyName) {
         return test(value, keyName, parentKeyName);
       }
 
-      // If the callback name exists as the last argument, consider it an
-      // asynchronous function.  Brittle? Fragile? Effective.
-      if (callbacks.indexOf(args(value).slice(-1)[0]) > -1) {
-        return true;
-      }
+      return true;
     }
   }).forEach(function(keyVal) {
     var keyName = keyVal[0];
     var func = keyVal[1];
 
     // Wrap this function and reassign.
-    exports[keyName] = processExports(func, test, cached, parentKeyName);
+    target[keyName] = processExports(func, test, cached, parentKeyName, noMutate);
   });
 
-  return exports;
+  return target;
 }
 
 /**
@@ -115,20 +145,23 @@ function processExports(exports, test, cached, parentKeyName) {
  *
  * @param {*} name - Can be a module name, object, or function.
  * @param {Function} test - Optional function to identify async methods.
+ * @param {Boolean} noMutate - Optional set to true to avoid mutating the target.
  * @returns {*} exports - The resolved value from require or passed in value.
  */
-module.exports = function(name, test) {
+module.exports = function(name, test, noMutate) {
   var exports = name;
 
   // If the name argument is a String, will need to resovle using the built in
   // Node require function.
   if (typeof name === "string") {
     exports = require(name);
+    // Unless explicitly overridden, don't mutate when requiring modules.
+    noMutate = !(noMutate === false);
   }
 
   // Iterate over all properties and find asynchronous functions to convert to
   // promises.
-  return processExports(exports, test, []);
+  return processExports(exports, test, [], undefined, noMutate);
 };
 
 // Export callbacks to the module.
