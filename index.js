@@ -18,10 +18,22 @@ function processExports(exports, test, cached, parentKeyName) {
   // Return early if this object has already been processed.
   if (cached.indexOf(exports) > -1) {
     return exports;
+  } else if(typeof exports === "function") {
+    // For functions, cache the original and wrapped version, else non-wrapped
+    // functions end up being given back when encountered multiple times.
+    var cacheResult = cached.filter(function(c) {
+      return c.original === exports;
+    });
+
+    if(cacheResult.length) {
+      return cacheResult[0].wrapped;
+    }
   }
 
-  // Record this object in the cache.
-  cached.push(exports);
+  // Record this object in the cache, if it is not a function.
+  if(typeof exports != "function") {
+    cached.push(exports);
+  }
 
   // Pass through if not an object or function.
   if (typeof exports != "object" && typeof exports != "function") {
@@ -32,13 +44,20 @@ function processExports(exports, test, cached, parentKeyName) {
 
   // If a function, simply return it wrapped.
   if (typeof exports === "function") {
+    // Assign the new function in place.
+    var wrapped = Promise.denodeify(exports);
+
+    // Push the wrapped function onto the cache before processing properties,
+    // else a cyclical function property causes a stack overflow.
+    cached.push({
+      original: exports,
+      wrapped: wrapped
+    });
+
     // Find properties added to functions.
     for (var keyName in exports) {
       exports[keyName] = processExports(exports[keyName], test, cached, name);
     }
-
-    // Assign the new function in place.
-    var wrapped = Promise.denodeify(exports);
 
     // Find methods on the prototype, if there are any.
     if (Object.keys(exports.prototype).length) {

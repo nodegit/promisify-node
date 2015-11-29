@@ -104,5 +104,37 @@ describe("Promisify", function() {
 
       return new Test().a();
     });
+
+    it("can deal with the same async function being present in an object more than once", function() {
+      var a = {
+        a: function(d, cb) {
+          cb && cb(null, d);
+        }
+      };
+
+      a.b = a.a;
+
+      a = promisify(a);
+
+      assert(a.a(5) !== undefined, "function not wrapped");
+      assert(typeof a.a(5).then === "function", "function not wrapped");
+      assert(a.b(5) !== undefined, "duplicate function not wrapped");
+      assert(typeof a.b(5).then === "function", "duplicate function not wrapped");
+    });
+
+    it("can deal with cyclical function properties", function() {
+      var a = function(d, cb) {
+        cb && cb(null, d);
+      };
+
+      a.a = a;
+
+      a = promisify(a);
+
+      assert(a(5) !== undefined, "function not wrapped");
+      assert(typeof a(5).then === "function", "function not wrapped");
+      assert(a.a(5) !== undefined, "function property not wrapped");
+      assert(typeof a.a(5).then === "function", "function property not wrapped");
+    });
   });
 });
