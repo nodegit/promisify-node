@@ -1,6 +1,6 @@
 {
   "name": "promisify-node",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Wrap Node-callback functions to return Promises.",
   "main": "index.js",
   "dependencies": {
