@@ -6,8 +6,8 @@
  */
 module.exports = function(func) {
   // First match everything inside the function argument parens.
-  var args = func.toString().match(/function\s.*?\(([^)]*)\)/)[1];
- 
+  var args = func.toString().match(/^[function\s]?.*?\(([^)]*)\)/)[1];
+
   // Split the arguments string into an array comma delimited.
   return args.split(", ").map(function(arg) {
     // Ensure no inline comments are parsed and trim the whitespace.
