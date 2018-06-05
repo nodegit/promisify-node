@@ -98,6 +98,14 @@ describe("Promisify", function() {
       return obj.a();
     });
 
+    it("can infer callback-accepting arrow functions", function() {
+      var obj = promisify({
+        a: (cb) => { later(cb); }
+      });
+
+      return obj.a();
+    });
+
     it("can infer callback-accepting functions by argument list", function() {
       var obj = promisify({
         a: function(callback) { later(callback); }

@@ -83,7 +83,7 @@ function processExports(exports, test, cached, parentKeyName, noMutate) {
     }
 
     // Find methods on the prototype, if there are any.
-    if (Object.keys(exports.prototype).length) {
+    if (exports.prototype && Object.keys(exports.prototype).length) {
       // Attach the augmented prototype.
       wrapped.prototype = processExports(exports.prototype, test, cached, name, noMutate);
     }
