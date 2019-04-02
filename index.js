@@ -143,25 +143,15 @@ function processExports(exports, test, cached, parentKeyName, noMutate) {
 /**
  * Public API for Promisify.  Will resolve modules names using `require`.
  *
- * @param {*} name - Can be a module name, object, or function.
+ * @param {*} name - Can be an object or function.
  * @param {Function} test - Optional function to identify async methods.
  * @param {Boolean} noMutate - Optional set to true to avoid mutating the target.
  * @returns {*} exports - The resolved value from require or passed in value.
  */
-module.exports = function(name, test, noMutate) {
-  var exports = name;
-
-  // If the name argument is a String, will need to resovle using the built in
-  // Node require function.
-  if (typeof name === "string") {
-    exports = require(name);
-    // Unless explicitly overridden, don't mutate when requiring modules.
-    noMutate = !(noMutate === false);
-  }
-
+module.exports = function(toPromisify, test, noMutate) {
   // Iterate over all properties and find asynchronous functions to convert to
   // promises.
-  return processExports(exports, test, [], undefined, noMutate);
+  return processExports(toPromisify, test, [], undefined, noMutate);
 };
 
 // Export callbacks to the module.

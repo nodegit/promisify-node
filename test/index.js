@@ -24,55 +24,6 @@ describe("Promisify", function() {
     assert(Array.isArray(promisify.callbacks));
   });
 
-  describe("node modules", function() {
-    it("can be consumed", function() {
-      var fs = promisify("fs");
-      return fs.readFile(__dirname + "/../LICENSE");
-    });
-
-    it("can promisify the same object twice without breaking", function() {
-      var fs = promisify("fs");
-      fs = promisify("fs");
-
-      return fs.readFile(__dirname + "/../LICENSE");
-    });
-
-    it("doesn't mutate objects for other consumers", function() {
-      var fsp = promisify("fs");
-      var fs2 = require("fs");
-
-      assert(fsOriginal.readFile !== fsp.readFile, "pre-required mutated");
-      assert(fsOriginal.readFile === fs2.readFile, "post-required mutated");
-      assert(fsp.readFile !== fs2.readFile, "post-required mutated");
-    });
-
-    it("doesn't mutate functions for other consumers", function() {
-      var fn = require(__dirname + "/examples/fn-export.js");
-      var fnx = fn.x;
-      var fnp = promisify(__dirname + "/examples/fn-export.js");
-      var fn2 = require(__dirname + "/examples/fn-export.js");
-
-      assert(fn.x !== fnp, "pre-required mutated");
-      assert(fn2.x !== fnp, "post-required mutated");
-      assert(fn.x === fnx, "function property mutated");
-      assert(fnp.x !== fn, "function property not replaced");
-    });
-
-    it("doesn't mutate prototypes for other consumers", function() {
-      var A = require(__dirname + "/examples/proto-export.js");
-      var a = new A(5);
-      var Ap = promisify(__dirname + "/examples/proto-export.js");
-      var ap = new Ap(5);
-      var A2 = require(__dirname + "/examples/proto-export.js");
-      var a2 = new A2(5);
-
-      assert(isPromisified(ap.a, ap), "prototype method not promisified");
-      assert(a.a !== ap.a, "pre-required mutated");
-      assert(a2.a !== ap.a, "post-required mutated");
-      assert(a2.a === a.a, "post-required mutated");
-    });
-  });
-
   describe("asynchronous method inference", function() {
     var later = function(cb) {
       setTimeout(cb(null), 0);
